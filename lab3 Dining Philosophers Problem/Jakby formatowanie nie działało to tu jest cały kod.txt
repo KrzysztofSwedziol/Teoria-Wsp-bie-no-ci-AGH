@@ -1,0 +1,913 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
+//zadanie 1
+class  Fork{
+    public int number;
+    public boolean taken;
+    public Fork(int n){
+        number = n;
+        taken = false;
+    }
+    public synchronized void takeFork(){
+        while(taken) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        taken = true;
+    }
+    public synchronized void releaseFork(){
+        taken = false;
+        notifyAll();
+    }
+}
+
+class Philosopher extends Thread{
+    public int number;
+    public Fork leftFork;
+    public Fork rightFork;
+    public Philosopher(int n, Fork leftFork, Fork rightFork){
+        number = n;
+        this.leftFork = leftFork;
+        this.rightFork = rightFork;
+    }
+    public void think(){
+        try {
+            System.out.println("Philosopher " + number + " is thinking...");
+            //Thread.sleep(2000);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void eat(){
+        try {
+            System.out.println("Philosopher " + number + " is eating...");
+            //Thread.sleep(2000);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void takeLeft(){
+        System.out.println("Philosopher " + number + " is trying to take his left fork of num: "+ leftFork.number);
+        this.leftFork.takeFork();
+        System.out.println("Philosopher " + number + " has taken: "+ leftFork.number);
+
+    }
+    public void takeRight(){
+        System.out.println("Philosopher " + number + " is trying to take his right fork of num: "+ rightFork.number);
+        this.rightFork.takeFork();
+        System.out.println("Philosopher " + number + " has taken: "+ rightFork.number);
+
+    }
+    public void releaseLeft(){
+        this.leftFork.releaseFork();
+    }
+    public void releaseRight(){
+        this.rightFork.releaseFork();
+    }
+
+
+    public void run(){
+        while(true){
+            this.think();
+            this.takeLeft();
+            this.takeRight();
+            this.eat();
+            this.releaseLeft();
+            this.releaseRight();
+
+        }
+    }
+
+}
+
+//zadanie 2
+class PhilosopherZad2 extends Thread{
+    public int number;
+    public Fork leftFork;
+    public Fork rightFork;
+    public boolean bothTaken = false;
+    public long totalWaitTime = 0;
+    public int eatAttempts = 0;
+    public PhilosopherZad2(int n, Fork leftFork, Fork rightFork){
+        number = n;
+        this.leftFork = leftFork;
+        this.rightFork = rightFork;
+    }
+    public void think(){
+        try {
+            System.out.println("Philosopher " + number + " is thinking...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void eat(){
+        try {
+            System.out.println("Philosopher " + number + " is eating...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void takeLeft(){
+        System.out.println("Philosopher " + number + " is trying to take his left fork of num: "+ leftFork.number);
+        long startWait = System.nanoTime();
+        this.leftFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        System.out.println("Philosopher " + number + " has taken: "+ leftFork.number);
+
+
+    }
+    public void takeRight(){
+        System.out.println("Philosopher " + number + " is trying to take his right fork of num: "+ rightFork.number);
+        if(this.rightFork.taken == true){
+            releaseLeft();
+        }else{
+            long startWait = System.nanoTime();
+            this.rightFork.takeFork();
+            long waitTime = System.nanoTime() - startWait;
+            this.totalWaitTime += waitTime;
+            this.bothTaken = true;
+        }
+        System.out.println("Philosopher " + number + " has taken: "+ rightFork.number);
+
+    }
+    public void releaseLeft(){
+        this.leftFork.releaseFork();
+    }
+    public void releaseRight(){
+        this.rightFork.releaseFork();
+    }
+
+    public double getAverageWaitTime() {
+        if(eatAttempts != 0){
+            return (totalWaitTime / (double) eatAttempts) / 1_000_000;
+        }else{
+            return this.totalWaitTime;
+        }
+    }
+
+    public void run(){
+        while(true){
+            this.think();
+            while(bothTaken != true){
+                this.takeLeft();
+                this.takeRight();
+            }
+            this.eat();
+            this.eatAttempts++;
+            this.releaseLeft();
+            this.bothTaken = false;
+            this.releaseRight();
+
+        }
+    }
+
+}
+
+//zadanie 3
+class PhilosopherZad3 extends Thread{
+    public int number;
+    public Fork leftFork;
+    public Fork rightFork;
+    public long totalWaitTime = 0;
+    public int eatAttempts = 0;
+    public PhilosopherZad3(int n, Fork leftFork, Fork rightFork){
+        number = n;
+        this.leftFork = leftFork;
+        this.rightFork = rightFork;
+    }
+    public void think(){
+        try {
+            System.out.println("Philosopher " + number + " is thinking...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void eat(){
+        try {
+            System.out.println("Philosopher " + number + " is eating...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void takeLeft(){
+        System.out.println("Philosopher " + number + " is trying to take his left fork of num: "+ leftFork.number);
+        long startWait = System.nanoTime();
+        this.leftFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        System.out.println("Philosopher " + number + " has taken: "+ leftFork.number);
+
+
+    }
+    public void takeRight(){
+        System.out.println("Philosopher " + number + " is trying to take his right fork of num: "+ rightFork.number);
+        long startWait = System.nanoTime();
+        this.rightFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        System.out.println("Philosopher " + number + " has taken: "+ rightFork.number);
+
+    }
+    public void releaseLeft(){
+        this.leftFork.releaseFork();
+    }
+    public void releaseRight(){
+        this.rightFork.releaseFork();
+    }
+
+    public double getAverageWaitTime() {
+        if(eatAttempts != 0){
+            return (totalWaitTime / (double) eatAttempts) / 1_000_000;
+        }else{
+            return this.totalWaitTime;
+        }
+    }
+
+    public void run(){
+        while(true){
+            this.think();
+            if(this.number%2 == 0){
+                this.takeRight();
+                this.takeLeft();
+            }else{
+                this.takeLeft();
+                this.takeRight();
+            }
+            this.eat();
+            this.releaseLeft();
+            this.releaseRight();
+
+        }
+    }
+
+}
+
+//zadanie 4
+class PhilosopherZad4 extends Thread{
+    public int number;
+    public Fork leftFork;
+    public Fork rightFork;
+    public long totalWaitTime = 0;
+    public int eatAttempts = 0;
+    public PhilosopherZad4(int n, Fork leftFork, Fork rightFork){
+        number = n;
+        this.leftFork = leftFork;
+        this.rightFork = rightFork;
+    }
+    public void think(){
+        try {
+            System.out.println("Philosopher " + number + " is thinking...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void eat(){
+        try {
+            System.out.println("Philosopher " + number + " is eating...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void takeLeft(){
+        System.out.println("Philosopher " + number + " is trying to take his left fork of num: "+ leftFork.number);
+        long startWait = System.nanoTime();
+        this.leftFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        System.out.println("Philosopher " + number + " has taken: "+ leftFork.number);
+
+
+    }
+    public void takeRight(){
+        System.out.println("Philosopher " + number + " is trying to take his right fork of num: "+ rightFork.number);
+        long startWait = System.nanoTime();
+        this.rightFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        System.out.println("Philosopher " + number + " has taken: "+ rightFork.number);
+
+    }
+    public void releaseLeft(){
+        this.leftFork.releaseFork();
+    }
+    public void releaseRight(){
+        this.rightFork.releaseFork();
+    }
+
+    public double getAverageWaitTime() {
+        if(eatAttempts != 0){
+            return (totalWaitTime / (double) eatAttempts) / 1_000_000;
+        }else{
+            return this.totalWaitTime;
+        }
+    }
+
+    public void run(){
+        while(true){
+            this.think();
+            double coinFlip = Math.random();
+            if(coinFlip <= 0.5){
+                this.takeLeft();
+                this.takeRight();
+            }else{
+                this.takeRight();
+                this.takeLeft();
+            }
+            this.eat();
+            this.eatAttempts++;
+            this.releaseLeft();
+            this.releaseRight();
+
+        }
+    }
+
+}
+//zadanie 5
+class Waiter extends Thread{
+    private List<PhilosopherZad5> philosophers = new ArrayList<>();
+    private List<Thread> philosopherThreads = new ArrayList<>();
+    private PhilosopherZad5 blockedFilosopher;
+
+    public synchronized void addPhilosopher(PhilosopherZad5 philosopher, Thread philosopherThread){
+        this.philosophers.add(philosopher);
+        this.philosopherThreads.add(philosopherThread);
+    }
+    public synchronized void restrainPhilosopher(PhilosopherZad5 philosopher){
+        philosopher.waiterRestrain();
+    }
+    public synchronized void releasePhilosopher(PhilosopherZad5 philosopher){
+        if(philosopher != null){
+            if(philosopher.allowedToEat == false){
+                philosopher.waiterRelease();
+            }
+        }
+    }
+    public synchronized boolean checkDeadlock(){
+        boolean flag = false;
+        for(PhilosopherZad5 philosopher: philosophers){
+            if(philosopher.getState() != Thread.State.WAITING){
+                flag = false;
+                return flag;
+            }
+        }
+        flag = true;
+        return flag;
+    }
+    public synchronized PhilosopherZad5 selectPhilosopher(){
+        int philosopherNum = (int) (Math.random() * philosophers.size());
+        return this.philosophers.get(philosopherNum);
+    }
+    public synchronized void somePhilosopherFinishedEating(){
+        this.releasePhilosopher(this.blockedFilosopher);
+    }
+    public void run(){
+        while(true){
+            if(this.checkDeadlock()){
+                this.blockedFilosopher = this.selectPhilosopher();
+                this.restrainPhilosopher(this.blockedFilosopher);
+            }
+        }
+    }
+}
+
+class PhilosopherZad5 extends Thread{
+    public int number;
+    public Fork leftFork;
+    public Fork rightFork;
+    public Waiter waiter;
+    public boolean allowedToEat = true;
+    public int hasBothForks = 0;
+    public long totalWaitTime = 0;
+    public int eatAttempts = 0;
+
+    public PhilosopherZad5(int n, Fork leftFork, Fork rightFork, Waiter waiter){
+        number = n;
+        this.leftFork = leftFork;
+        this.rightFork = rightFork;
+        this.waiter = waiter;
+    }
+    public void think(){
+        try {
+            System.out.println("Philosopher " + number + " is thinking...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void eat(){
+        try {
+            System.out.println("Philosopher " + number + " is eating...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void takeLeft(){
+        System.out.println("Philosopher " + number + " is trying to take his left fork of num: "+ leftFork.number);
+        long startWait = System.nanoTime();
+        this.leftFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        this.hasBothForks++;
+        System.out.println("Philosopher " + number + " has taken his left fork: "+ leftFork.number);
+
+
+    }
+    public void takeRight(){
+        System.out.println("Philosopher " + number + " is trying to take his right fork of num: "+ rightFork.number);
+        long startWait = System.nanoTime();
+        this.rightFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        this.hasBothForks++;
+        System.out.println("Philosopher " + number + " has taken his right fork: "+ rightFork.number);
+
+    }
+    public void releaseLeft(){
+        this.leftFork.releaseFork();
+        this.hasBothForks--;
+    }
+    public void releaseRight(){
+        this.rightFork.releaseFork();
+        this.hasBothForks--;
+    }
+
+    public void waiterRestrain(){
+        System.out.println("Philosopher " + number + " is restrained");
+        this.releaseLeft();
+        this.allowedToEat = false;
+    }
+    public void waiterRelease(){
+        System.out.println("Philosopher " + number + " was released");
+        this.allowedToEat = true;
+    }
+    public double getAverageWaitTime() {
+        if(eatAttempts != 0){
+            return (totalWaitTime / (double) eatAttempts) / 1_000_000;
+        }else{
+            return this.totalWaitTime;
+        }
+    }
+
+    public void run(){
+        while(true){
+            this.think();
+            if(this.allowedToEat){
+                this.takeLeft();
+                this.takeRight();
+                if(this.hasBothForks == 2){
+                    this.eat();
+                    this.waiter.somePhilosopherFinishedEating();
+                    this.eatAttempts++;
+                    this.releaseLeft();
+                    this.releaseRight();
+                }else if(this.hasBothForks == 1){
+                    this.rightFork.releaseFork();
+                }
+            }
+        }
+    }
+}
+
+//zadanie 6
+class WaiterZad6 extends Thread{
+    private List<PhilosopherZad6> philosophers = new ArrayList<>();
+    private List<Thread> philosopherThreads = new ArrayList<>();
+    private PhilosopherZad6 blockedFilosopher;
+
+    public synchronized void addPhilosopher(PhilosopherZad6 philosopher, Thread philosopherThread){
+        this.philosophers.add(philosopher);
+        this.philosopherThreads.add(philosopherThread);
+    }
+    public synchronized void restrainPhilosopher(PhilosopherZad6 philosopher){
+        philosopher.waiterRestrain();
+    }
+    public synchronized void releasePhilosopher(PhilosopherZad6 philosopher){
+        if(philosopher != null){
+            if(philosopher.allowedToEat == false){
+                philosopher.waiterRelease();
+            }
+        }
+    }
+    public synchronized boolean checkDeadlock(){
+        boolean flag = false;
+        for(PhilosopherZad6 philosopher: philosophers){
+            if(philosopher.getState() != Thread.State.WAITING){
+                flag = false;
+                return flag;
+            }
+        }
+        flag = true;
+        return flag;
+    }
+    public synchronized PhilosopherZad6 selectPhilosopher(){
+        int philosopherNum = (int) (Math.random() * philosophers.size());
+        return this.philosophers.get(philosopherNum);
+    }
+    public synchronized void somePhilosopherFinishedEating(){
+        this.releasePhilosopher(this.blockedFilosopher);
+    }
+    public void run(){
+        while(true){
+            if(this.checkDeadlock()){
+                this.blockedFilosopher = this.selectPhilosopher();
+                this.restrainPhilosopher(this.blockedFilosopher);
+            }
+        }
+    }
+}
+
+class PhilosopherZad6 extends Thread {
+    public int number;
+    public Fork leftFork;
+    public Fork rightFork;
+    public WaiterZad6 waiter;
+    public boolean allowedToEat = true;
+    public int hasBothForks = 0;
+    public boolean hasToEatOutside = false;
+    public long totalWaitTime = 0;
+    private int eatAttempts = 0;
+
+    public PhilosopherZad6(int n, Fork leftFork, Fork rightFork, WaiterZad6 waiter) {
+        number = n;
+        this.leftFork = leftFork;
+        this.rightFork = rightFork;
+        this.waiter = waiter;
+    }
+
+    public void think() {
+        try {
+            System.out.println("Philosopher " + number + " is thinking...");
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void eat() {
+        try {
+            if (this.hasToEatOutside) {
+                System.out.println("Philosopher " + number + " is eating outside...");
+            } else {
+                System.out.println("Philosopher " + number + " is eating...");
+            }
+            Thread.sleep(500);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void takeLeft() {
+        System.out.println("Philosopher " + number + " is trying to take his left fork of num: " + leftFork.number);
+        long startWait = System.nanoTime();
+        this.leftFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        this.hasBothForks++;
+        System.out.println("Philosopher " + number + " has taken his left fork: " + leftFork.number);
+
+
+    }
+
+    public void takeRight() {
+        System.out.println("Philosopher " + number + " is trying to take his right fork of num: " + rightFork.number);
+        long startWait = System.nanoTime();
+        this.rightFork.takeFork();
+        long waitTime = System.nanoTime() - startWait;
+        this.totalWaitTime += waitTime;
+        this.hasBothForks++;
+        System.out.println("Philosopher " + number + " has taken his right fork: " + rightFork.number);
+
+    }
+
+    public void releaseLeft() {
+        this.leftFork.releaseFork();
+        this.hasBothForks--;
+    }
+
+    public void releaseRight() {
+        this.rightFork.releaseFork();
+        this.hasBothForks--;
+    }
+
+    public void waiterRestrain() {
+        System.out.println("Philosopher " + number + " is restrained");
+        this.releaseLeft();
+        this.allowedToEat = false;
+    }
+
+    public void waiterRelease() {
+        System.out.println("Philosopher " + number + " was released");
+        this.allowedToEat = true;
+    }
+    public double getAverageWaitTime() {
+        if(eatAttempts != 0){
+            return (totalWaitTime / (double) eatAttempts) / 1_000_000;
+        }else{
+            return this.totalWaitTime;
+        }
+    }
+
+
+    public void run() {
+        while (true) {
+            this.think();
+            if (this.allowedToEat && this.hasToEatOutside == false) {
+                this.takeLeft();
+                this.takeRight();
+                if (this.hasBothForks == 2) {
+                    this.eat();
+                    this.waiter.somePhilosopherFinishedEating();
+                    this.eatAttempts++;
+                    this.releaseLeft();
+                    this.releaseRight();
+                } else if (this.hasBothForks == 1) {
+                    this.rightFork.releaseFork();
+                    this.hasToEatOutside = true;
+                }
+            }
+            if (this.allowedToEat && this.hasToEatOutside == true) {
+                this.takeRight();
+                this.takeLeft();
+                if (this.hasBothForks == 2) {
+                    this.eat();
+                    this.waiter.somePhilosopherFinishedEating();
+                    this.eatAttempts++;
+                    this.hasToEatOutside = false;
+                    this.releaseLeft();
+                    this.releaseRight();
+                }
+            }
+        }
+    }
+}
+
+class Executor {
+    public long executionDuration = 10000;
+
+    public void executeZad1(int amount) {
+        List<Fork> forks = new ArrayList<>();
+        List<Philosopher> philosophers = new ArrayList<>();
+
+        for (int i = 0; i < amount; i++) {
+            forks.add(new Fork(i));
+        }
+        for (int i = 0; i < amount; i++) {
+            Fork leftFork;
+            Fork rightFork;
+            if (i != amount - 1) {
+                leftFork = forks.get(i);
+                rightFork = forks.get(i + 1);
+            } else {
+                leftFork = forks.get(i);
+                rightFork = forks.get(0);
+            }
+            Philosopher philosopher = new Philosopher(i, leftFork, rightFork);
+            philosophers.add(philosopher);
+            philosopher.start();
+        }
+        this.endExecution(philosophers);
+    }
+
+    public void executeZad2(int amount) {
+        List<Fork> forks = new ArrayList<>();
+        List<PhilosopherZad2> philosophers = new ArrayList<>();
+
+        for (int i = 0; i < amount; i++) {
+            forks.add(new Fork(i));
+        }
+        for (int i = 0; i < amount; i++) {
+            Fork leftFork;
+            Fork rightFork;
+            if (i != amount - 1) {
+                leftFork = forks.get(i);
+                rightFork = forks.get(i + 1);
+            } else {
+                leftFork = forks.get(i);
+                rightFork = forks.get(0);
+            }
+            PhilosopherZad2 philosopherZad2 = new PhilosopherZad2(i, leftFork, rightFork);
+            philosophers.add(philosopherZad2);
+            philosopherZad2.start();
+        }
+        this.endExecution(philosophers);
+    }
+
+    public void executeZad3(int amount) {
+        List<Fork> forks = new ArrayList<>();
+        List<PhilosopherZad3> philosophers = new ArrayList<>();
+
+        for (int i = 0; i < amount; i++) {
+            forks.add(new Fork(i));
+        }
+        for (int i = 0; i < amount; i++) {
+            Fork leftFork;
+            Fork rightFork;
+            if (i != amount - 1) {
+                leftFork = forks.get(i);
+                rightFork = forks.get(i + 1);
+            } else {
+                leftFork = forks.get(i);
+                rightFork = forks.get(0);
+            }
+            PhilosopherZad3 philosopherZad3 = new PhilosopherZad3(i, leftFork, rightFork);
+            philosophers.add(philosopherZad3);
+            philosopherZad3.start();
+        }
+        this.endExecution(philosophers);
+    }
+
+    public void executeZad4(int amount) {
+        List<Fork> forks = new ArrayList<>();
+        List<PhilosopherZad4> philosophers = new ArrayList<>();
+
+        for (int i = 0; i < amount; i++) {
+            forks.add(new Fork(i));
+        }
+        for (int i = 0; i < amount; i++) {
+            Fork leftFork;
+            Fork rightFork;
+            if (i != amount - 1) {
+                leftFork = forks.get(i);
+                rightFork = forks.get(i + 1);
+            } else {
+                leftFork = forks.get(i);
+                rightFork = forks.get(0);
+            }
+            PhilosopherZad4 philosopherZad4 = new PhilosopherZad4(i, leftFork, rightFork);
+            philosophers.add(philosopherZad4);
+            philosopherZad4.start();
+        }
+        this.endExecution(philosophers);
+    }
+
+    public void executeZad5(int amount) {
+        List<Fork> forks = new ArrayList<>();
+        List<PhilosopherZad5> philosopherList = new ArrayList<>();
+        Waiter waiter = new Waiter();
+
+        for (int i = 0; i < amount; i++) {
+            forks.add(new Fork(i));
+        }
+        for (int i = 0; i < amount; i++) {
+            Fork leftFork;
+            Fork rightFork;
+            if (i != amount - 1) {
+                leftFork = forks.get(i);
+                rightFork = forks.get(i + 1);
+            } else {
+                leftFork = forks.get(i);
+                rightFork = forks.get(0);
+            }
+            PhilosopherZad5 philosopherZad5 = new PhilosopherZad5(i, leftFork, rightFork, waiter);
+            philosopherList.add(philosopherZad5);
+            Thread currThread = new Thread(philosopherZad5);
+            waiter.addPhilosopher(philosopherZad5, currThread);
+
+        }
+        waiter.start();
+        for (PhilosopherZad5 philosopher : philosopherList) {
+            philosopher.start();
+        }
+        this.endExecution(philosopherList);
+    }
+
+    public void executeZad6(int amount) {
+        List<Fork> forks = new ArrayList<>();
+        List<PhilosopherZad6> philosopherList = new ArrayList<>();
+        WaiterZad6 waiter = new WaiterZad6();
+
+        for (int i = 0; i < amount; i++) {
+            forks.add(new Fork(i));
+        }
+        for (int i = 0; i < amount; i++) {
+            Fork leftFork;
+            Fork rightFork;
+            if (i != amount - 1) {
+                leftFork = forks.get(i);
+                rightFork = forks.get(i + 1);
+            } else {
+                leftFork = forks.get(i);
+                rightFork = forks.get(0);
+            }
+            PhilosopherZad6 philosopherZad6 = new PhilosopherZad6(i, leftFork, rightFork, waiter);
+            philosopherList.add(philosopherZad6);
+            Thread currThread = new Thread(philosopherZad6);
+            waiter.addPhilosopher(philosopherZad6, currThread);
+
+        }
+        waiter.start();
+        for (PhilosopherZad6 philosopher : philosopherList) {
+            philosopher.start();
+        }
+        this.endExecution(philosopherList);
+    }
+
+    private void endExecution(List<? extends Thread> philosophers) {
+        try {
+            Thread.sleep(executionDuration);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (Thread philosopher : philosophers) {
+            philosopher.interrupt();
+        }
+
+        Map<Integer, Double> averageWaitTimes = new HashMap<>();
+        for (Thread philosopher : philosophers) {
+            if (philosopher instanceof Philosopher) {
+                System.out.println("W pierwszym filozofie może być deadlock");
+            } else if (philosopher instanceof PhilosopherZad2) {
+                PhilosopherZad2 p = (PhilosopherZad2) philosopher;
+                averageWaitTimes.put(p.number, p.getAverageWaitTime());
+            } else if (philosopher instanceof PhilosopherZad3) {
+                PhilosopherZad3 p = (PhilosopherZad3) philosopher;
+                averageWaitTimes.put(p.number, p.getAverageWaitTime());
+            } else if (philosopher instanceof PhilosopherZad4) {
+                PhilosopherZad4 p = (PhilosopherZad4) philosopher;
+                averageWaitTimes.put(p.number, p.getAverageWaitTime());
+            } else if (philosopher instanceof PhilosopherZad5) {
+                PhilosopherZad5 p = (PhilosopherZad5) philosopher;
+                averageWaitTimes.put(p.number, p.getAverageWaitTime());
+            } else if (philosopher instanceof PhilosopherZad6) {
+                PhilosopherZad6 p = (PhilosopherZad6) philosopher;
+                averageWaitTimes.put(p.number, p.getAverageWaitTime());
+            }
+        }
+
+        this.printAverageTimes(averageWaitTimes);
+        this.writeCSV(averageWaitTimes);
+    }
+
+    private void printAverageTimes(Map<Integer, Double> averageWaitTimes) {
+        System.out.println("ID Filozofa\tŚredni czas oczekiwania (ms)");
+        for (Entry<Integer, Double> entry : averageWaitTimes.entrySet()) {
+            System.out.println("Filozof " + entry.getKey() + "\t" + entry.getValue());
+        }
+    }
+    private void writeCSV(Map<Integer, Double> averageWaitTimes) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("average_wait_times.csv"))) {
+            writer.write("ID, Average wait time (ms)\n");
+
+
+            for (Entry<Integer, Double> entry : averageWaitTimes.entrySet()) {
+                writer.write(entry.getKey() + "," + entry.getValue() + "\n");
+            }
+
+            System.out.println("Zapisano do average_wait_times.csv");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int firstPhilosophersAmount = 5;
+        int secondPhilosophersAmount = 10;
+        int thirdPhilosophersAmount = 20;
+        Executor executor = new Executor();
+
+        //executor.executeZad1(firstPhilosophersAmount);
+        //executor.executeZad1(secondPhilosophersAmount);
+        //executor.executeZad1(thirdPhilosophersAmount);
+
+        //executor.executeZad2(firstPhilosophersAmount);
+        //executor.executeZad2(secondPhilosophersAmount);
+        //executor.executeZad2(thirdPhilosophersAmount);
+
+        //executor.executeZad3(firstPhilosophersAmount);
+        //executor.executeZad3(secondPhilosophersAmount);
+        //executor.executeZad3(thirdPhilosophersAmount);
+
+        //executor.executeZad4(firstPhilosophersAmount);
+        //executor.executeZad4(secondPhilosophersAmount);
+        //executor.executeZad4(thirdPhilosophersAmount);
+
+        //executor.executeZad5(firstPhilosophersAmount);
+        //executor.executeZad5(secondPhilosophersAmount);
+        //executor.executeZad5(thirdPhilosophersAmount);
+
+        //executor.executeZad6(firstPhilosophersAmount);
+        executor.executeZad6(secondPhilosophersAmount);
+        //executor.executeZad6(thirdPhilosophersAmount);
+    }
+}
